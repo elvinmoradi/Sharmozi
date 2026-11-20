@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0b0e14">
+<title>BANANA CITY</title>
+<style>
+:root{--y:#ffd21f;--b:#1b64f2;--k:#0b0e14;--k2:#141a26;--w:#f4f6fa}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--k);color:var(--w);font-family:Tahoma,"Segoe UI",system-ui,sans-serif;touch-action:none}
+canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block}
+.hidden{display:none!important}
+button{font-family:inherit;color:inherit;border:0;cursor:pointer}
+/* ---------- loading / title ---------- */
+#loading,#title{position:fixed;inset:0;z-index:50;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:20px;text-align:center}
+#loading{background:radial-gradient(circle at 50% 40%,#16213b,#05070c)}
+#title{background:linear-gradient(180deg,rgba(5,7,12,.15),rgba(5,7,12,.78) 70%)}
+.logo{display:flex;align-items:center;gap:10px;direction:ltr}
+.logo svg{width:64px;height:64px;filter:drop-shadow(0 3px 0 #000)}
+.logo b{font:900 italic clamp(34px,9vw,64px)/1 Impact,"Arial Black",sans-serif;letter-spacing:1px;color:var(--y);text-shadow:3px 3px 0 #000,-1px -1px 0 var(--b)}
+.logo span{display:block;font:800 italic clamp(16px,4vw,26px)/1 "Arial Black",Arial,sans-serif;color:#fff;letter-spacing:10px;background:var(--b);padding:4px 10px;margin-top:4px;text-align:center}
+#loadWrap{width:min(320px,80vw);height:10px;border-radius:6px;background:#222b3d;overflow:hidden}
+#loadBar{height:100%;width:0;background:linear-gradient(90deg,var(--y),#ffb800);transition:width .2s}
+#loadTxt{font-size:13px;color:#9fb0cc}
+.tbtn{min-width:230px;padding:13px 22px;font-size:17px;font-weight:700;border-radius:12px;background:var(--y);color:var(--k);box-shadow:0 4px 0 #b08d00}
+.tbtn.alt{background:var(--b);color:#fff;box-shadow:0 4px 0 #0f3fa0}.tbtn.ghost{background:#202a3d;color:#fff;box-shadow:0 4px 0 #0e131d}
+.tbtn:active{transform:translateY(3px);box-shadow:none}
+#nameIn{width:230px;padding:11px;border-radius:10px;border:2px solid #2a3753;background:#0e1420;color:#fff;font-size:16px;text-align:center;user-select:text;-webkit-user-select:text}
+.small{font-size:12px;color:#9fb0cc;max-width:340px;line-height:1.7}
+/* ---------- HUD ---------- */
+#hud{position:fixed;inset:0;pointer-events:none;z-index:10;transition:opacity .2s}
+#hud.dim{opacity:.35}
+#minimap{position:absolute;left:max(10px,env(safe-area-inset-left));top:max(10px,env(safe-area-inset-top));width:128px;display:flex;flex-direction:column;align-items:center;gap:4px}
+#mm{width:128px;height:128px;border-radius:50%;background:#0f1724;box-shadow:0 0 0 2px #000,0 3px 12px #000a}
+#clockRow{display:flex;gap:8px;background:#000a;border-radius:10px;padding:3px 10px;font-size:13px;font-weight:700;direction:ltr}
+#stats{position:absolute;right:max(10px,env(safe-area-inset-right));top:max(10px,env(safe-area-inset-top));width:176px;background:#0b0e14d9;border:1px solid #2a3753;border-radius:14px;padding:9px 11px;display:flex;flex-direction:column;gap:5px}
+#hMoney{font:800 22px/1 "Arial Black",Arial;color:var(--y);direction:ltr;text-align:right}
+#hBank{font:600 12px Arial;color:#9fd0ff;direction:ltr;text-align:right}
+.lv{display:flex;justify-content:space-between;font-size:11px;color:#c7d3ea}
+.bar{height:7px;border-radius:5px;background:#243049;overflow:hidden}.bar i{display:block;height:100%;width:50%;transition:width .15s}
+#hXp{background:var(--b)}#hHp{background:#ef4444}#hHunger{background:#f59e0b}#hStam{background:#22c55e}
+.bl{display:flex;align-items:center;gap:6px;font-size:11px}.bl .bar{flex:1}.bl span{width:16px}
+#tracker{position:absolute;right:max(10px,env(safe-area-inset-right));top:calc(max(10px,env(safe-area-inset-top)) + 150px);width:176px;display:flex;flex-direction:column;gap:5px}
+.tr{background:#0b0e14c8;border-right:4px solid var(--b);border-radius:9px;padding:6px 8px;font-size:11px;line-height:1.5}
+.tr.job{border-color:var(--y)}.tr.daily{border-color:#a78bfa}.tr b{display:block;color:#fff;font-size:12px}.tr span{color:#bcc8df}
+#arrow{position:absolute;left:50%;top:max(14px,env(safe-area-inset-top));transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;font:700 12px Arial;color:#fff;text-shadow:0 1px 3px #000}
+#arrow i{display:block;width:0;height:0;border-left:11px solid transparent;border-right:11px solid transparent;border-bottom:24px solid var(--y);filter:drop-shadow(0 1px 2px #000)}
+#toasts{position:absolute;left:50%;top:70px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;width:min(92vw,420px)}
+.toast{background:#0b0e14ea;border:1px solid #2a3753;border-radius:10px;padding:8px 14px;font-size:13px;text-align:center;animation:tin .25s}
+.toast.good{border-color:#22c55e}.toast.bad{border-color:#ef4444}
+@keyframes tin{from{opacity:0;transform:translateY(-8px)}}
+#prompt{position:absolute;left:50%;bottom:150px;transform:translateX(-50%);background:#0b0e14e6;border:2px solid var(--y);border-radius:12px;padding:8px 16px;font-size:15px;font-weight:700;white-space:nowrap}
+body.touch #prompt{bottom:auto;top:46%}
+kbd{background:var(--y);color:#000;border-radius:5px;padding:1px 7px;font:800 13px Arial;margin-left:4px}
+#speedo{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);width:170px;background:#0b0e14d9;border:2px solid var(--y);border-radius:18px;padding:6px 10px;text-align:center}
+#kmh{font:900 38px/1 "Arial Black",Arial;direction:ltr}.u{font-size:11px;color:#9fb0cc}
+#gear{display:inline-block;background:var(--b);border-radius:6px;padding:0 8px;font:800 14px Arial;margin-inline-start:6px}
+.fb{height:6px;border-radius:4px;background:#243049;margin-top:5px;overflow:hidden}.fb i{display:block;height:100%;background:var(--y)}.fb.low i{background:#ef4444}.nb i{background:#38bdf8}
+#drift{position:absolute;left:50%;top:24%;transform:translateX(-50%);font:900 34px Impact,Arial;color:var(--y);text-shadow:0 3px 0 #000,0 0 14px #ff9a1f}
+#repair{position:absolute;left:50%;top:58%;transform:translateX(-50%);width:200px;height:12px;border-radius:8px;background:#000a;border:2px solid var(--y);overflow:hidden}#repair i{display:block;height:100%;background:var(--y);width:0}
+#fps{position:absolute;left:150px;top:12px;font:11px monospace;color:#8f8;background:#0008;padding:2px 6px;border-radius:5px}
+/* ---------- touch controls ---------- */
+#touch{position:fixed;inset:0;z-index:20;display:none}
+body.touch #touch{display:block}
+#touch.hidden{display:none!important}
+#joyzone{position:absolute;left:0;bottom:0;width:42%;height:55%}
+#joy{position:absolute;left:max(26px,env(safe-area-inset-left));bottom:30px;width:118px;height:118px;border-radius:50%;background:#ffffff18;border:2px solid #ffffff40}
+#knob{position:absolute;left:34px;top:34px;width:50px;height:50px;border-radius:50%;background:#ffd21fcc;box-shadow:0 2px 8px #000a}
+.tb{position:absolute;width:62px;height:62px;border-radius:50%;background:#0b0e14b3;border:2px solid #ffffff55;color:#fff;font-size:22px;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+.tb small{font-size:9px;margin-top:2px;max-width:54px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tb.down,.tb.on{background:#ffd21fe0;color:#000}.tb.ready{border-color:var(--y);box-shadow:0 0 14px #ffd21f99}
+.tb.sm{width:44px;height:44px;font-size:18px}
+#bJump{right:max(18px,env(safe-area-inset-right));bottom:34px;width:74px;height:74px}
+#bRun{right:108px;bottom:24px}#bUse{right:max(18px,env(safe-area-inset-right));bottom:118px;width:68px;height:68px;background:#1b64f2cc}
+#bCar{right:100px;bottom:96px}
+#bGas{right:max(18px,env(safe-area-inset-right));bottom:30px;width:84px;height:84px;background:#16a34acc}
+#bBrake{right:116px;bottom:30px;width:74px;height:74px;background:#dc2626cc}
+#bNitro{right:max(18px,env(safe-area-inset-right));bottom:188px;width:56px;height:56px;background:#0ea5e9cc}#bRadio{right:192px;bottom:128px}#bHand{right:max(18px,env(safe-area-inset-right));bottom:128px}#bHorn{right:76px;bottom:128px}#bLights{right:134px;bottom:128px}
+#bCam{left:max(10px,env(safe-area-inset-left));top:174px}#bPhone{left:max(10px,env(safe-area-inset-left));top:224px}#bMap{left:max(10px,env(safe-area-inset-left));top:274px}#bPause{left:max(64px,calc(env(safe-area-inset-left) + 54px));top:174px}
+body:not(.invehicle) #bGas,body:not(.invehicle) #bBrake,body:not(.invehicle) #bHand,body:not(.invehicle) #bHorn,body:not(.invehicle) #bLights,body:not(.invehicle) #bRadio,body:not(.invehicle) #bNitro{display:none}
+body.invehicle #bJump,body.invehicle #bRun{display:none}
+/* ---------- menus ---------- */
+#menu,#phone,#fullmap{position:fixed;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;background:#05070c99}
+#menuBox{width:min(92vw,440px);max-height:88vh;display:flex;flex-direction:column;background:var(--k2);border:2px solid var(--y);border-radius:18px;overflow:hidden}
+#menuHead{padding:12px 16px;background:var(--k);border-bottom:1px solid #2a3753}
+#menuTitle{font-size:19px;font-weight:800;color:var(--y)}#menuSub{font-size:12px;color:#b9c6df;margin-top:5px;line-height:1.8}
+#menuList{overflow:auto;padding:8px;display:flex;flex-direction:column;gap:6px;touch-action:pan-y}
+.mi{display:flex;justify-content:space-between;align-items:center;gap:10px;text-align:right;background:#1d2638;border-radius:11px;padding:11px 13px;font-size:14px;width:100%}
+.mi:active{background:#2a3753}.mi.dis{opacity:.45}.mi .mt small{display:block;font-size:11px;color:#9fb0cc;margin-top:2px}.mi .mr{color:var(--y);font-weight:700;white-space:nowrap;direction:ltr}
+.dot{display:inline-block;width:16px;height:16px;border-radius:50%;border:2px solid #fff8;vertical-align:middle}
+#phoneBox{width:min(92vw,360px);height:min(86vh,640px);display:flex;flex-direction:column;background:#0a0d14;border:3px solid #2b3550;border-radius:30px;overflow:hidden;box-shadow:0 10px 40px #000}
+#phoneTop{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;background:linear-gradient(90deg,#10203f,#0b0e14);border-bottom:2px solid var(--y)}
+#phoneTitle{font-weight:800;font-size:16px;direction:ltr}#phoneBack{background:#1d2638;border-radius:8px;padding:4px 12px;font-size:15px}
+#phoneBody{flex:1;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:8px;touch-action:pan-y}
+.apps{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.app{background:#1d2638;border-radius:16px;padding:10px 0;display:flex;flex-direction:column;align-items:center;gap:4px}.app span{font-size:26px}.app small{font-size:10.5px}
+.pinfo{font-size:12px;color:#9fb0cc;text-align:center;margin:8px 0}
+.card{background:#1d2638;border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.8}
+.sub{font-size:12px;color:var(--y);margin-top:6px;font-weight:700}
+.row{background:#161e2e;border-radius:10px;padding:9px 11px;font-size:12.5px;display:flex;justify-content:space-between;align-items:center;gap:8px;line-height:1.6;flex-wrap:wrap}
+.row.ok{opacity:.6}.row.dim{color:#7d8aa6}.row small{color:#9fb0cc}.row input{width:100%}
+.pb{background:var(--b);border-radius:11px;padding:10px;font-size:13px;font-weight:700;width:100%}.pb.ghost{background:#222b3d}.pb.danger{background:#7f1d1d}
+.seg{display:flex;gap:6px}.seg button{flex:1;background:#1d2638;border-radius:9px;padding:9px;font-size:13px}.seg button.on{background:var(--y);color:#000;font-weight:800}
+#fullmap{flex-direction:column;gap:10px;background:#05070cf2}
+#fm{border:3px solid var(--y);border-radius:14px;touch-action:none;background:#0f1724}
+#fmBar{display:flex;gap:10px}
+@media (orientation:portrait){
+  #speedo{left:12px;transform:none;bottom:178px;width:150px}#kmh{font-size:30px}
+  #stats{width:150px;padding:7px 9px}#hMoney{font-size:19px}
+  #tracker{width:150px;top:calc(max(10px,env(safe-area-inset-top)) + 142px)}
+  #minimap{width:112px}#mm{width:112px;height:112px}
+  #toasts{top:60px}
+  .tbtn{min-width:210px}
+}
+#fade{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;z-index:60;transition:opacity .8s}#fade.on{opacity:1}
+
+/* ---- blue & white theme + slogan ---- */
+.slogan{font:800 clamp(17px,4.6vw,24px)/1.4 Tahoma,sans-serif;color:#0f2f73;text-shadow:0 1px 0 #fff}
+#title .slogan{color:#fff;text-shadow:0 2px 8px #0b2a6b}
+.sub2{font:700 13px Tahoma;letter-spacing:2px;color:#1b64f2}#title .sub2{color:#ffe36b}
+#stats,.tr,.toast,#prompt,#speedo,#clockRow,#repair{background:rgba(255,255,255,.93)!important;color:#0f2547!important;border-color:#bcd0f5!important}
+.tr b{color:#0b2a6b!important}.tr span{color:#3b5788!important}.lv{color:#3b5788!important}
+#hMoney{color:#1b64f2!important}#hBank{color:#3b82f6!important}.bar,.fb{background:#dbe6fb!important}#kmh{color:#0b2a6b}.u{color:#5b73a0!important}
+#gear{background:#1b64f2!important;color:#fff}kbd{background:#1b64f2!important;color:#fff!important}
+#menuBox,#phoneBox{background:#fff!important;border-color:#1b64f2!important;color:#0f2547}
+#menuHead{background:#eaf1ff!important;border-color:#cfdcf7!important}#menuTitle{color:#1b64f2!important}#menuSub{color:#3b5788!important}
+.mi{background:#f1f5fd!important;color:#0f2547!important}.mi:active{background:#dce8ff!important}.mi .mt small{color:#5b73a0!important}.mi .mr{color:#1b64f2!important}
+#phoneTop{background:linear-gradient(90deg,#1b64f2,#4a8bff)!important;color:#fff!important;border-color:#fff!important}#phoneBack{background:rgba(255,255,255,.25)!important}
+.app,.card,.row{background:#f1f5fd!important;color:#0f2547!important}.row small,.card small{color:#5b73a0!important}.pinfo{color:#5b73a0!important}
+.sub{color:#1b64f2!important}.pb{background:#1b64f2!important;color:#fff!important}.pb.ghost{background:#dbe6fb!important;color:#0f2547!important}.pb.danger{background:#c1121f!important}
+.seg button{background:#e6eefc!important;color:#0f2547!important}.seg button.on{background:#1b64f2!important;color:#fff!important}
+.tb{background:rgba(255,255,255,.78)!important;color:#0b2a6b!important;border-color:#1b64f2!important}.tb.down,.tb.on{background:#1b64f2!important;color:#fff!important}.tb.ready{box-shadow:0 0 14px #1b64f2aa!important}
+#loading{background:linear-gradient(180deg,#eef5ff,#9ec4ff)!important;color:#0f2547}#loadTxt{color:#1b4a9a!important}#loadWrap{background:#cfdcf7!important}#loadBar{background:linear-gradient(90deg,#1b64f2,#4a8bff)!important}
+#title{background:linear-gradient(180deg,rgba(235,244,255,.05),rgba(20,70,170,.85) 72%)!important}
+.tbtn{background:#fff!important;color:#1b64f2!important;box-shadow:0 4px 0 #9db9ee!important}.tbtn.alt{background:#1b64f2!important;color:#fff!important;box-shadow:0 4px 0 #0f3fa0!important}.tbtn.ghost{background:rgba(255,255,255,.22)!important;color:#fff!important;box-shadow:0 4px 0 rgba(0,0,0,.2)!important}
+.small{color:#eaf2ff!important}#title .small{color:#eaf2ff!important}#loading .small{color:#3b5788!important}
+#fullmap{background:rgba(235,244,255,.97)!important}#fm{border-color:#1b64f2!important}
+#nameIn{background:#fff!important;color:#0b2a6b!important;border-color:#9db9ee!important}
+#drift{color:#1b64f2!important;text-shadow:0 2px 0 #fff,0 0 10px #fff!important}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<div id="loading">
+  <div class="logo"><svg viewBox="0 0 64 64"><path d="M10 40C14 18 34 8 54 8c-6 6-8 12-8 18 0 14-12 28-30 28-4 0-7-4-6-14z" fill="#ffd21f" stroke="#0b0e14" stroke-width="3" stroke-linejoin="round"/><path d="M54 8l4-2" stroke="#0b0e14" stroke-width="4" stroke-linecap="round"/></svg><div><b>BANANA</b><span>CITY</span></div></div>
+  <div class="sub2">شهر موزی</div><div class="slogan">شهر تو، قوانین تو!</div>
+  <div id="loadWrap"><div id="loadBar"></div></div><div id="loadTxt">در حال ساخت شهر...</div>
+</div>
+
+<div id="title" class="hidden">
+  <div class="logo"><svg viewBox="0 0 64 64"><path d="M10 40C14 18 34 8 54 8c-6 6-8 12-8 18 0 14-12 28-30 28-4 0-7-4-6-14z" fill="#ffd21f" stroke="#0b0e14" stroke-width="3" stroke-linejoin="round"/><path d="M54 8l4-2" stroke="#0b0e14" stroke-width="4" stroke-linecap="round"/></svg><div><b>BANANA</b><span>CITY</span></div></div>
+  <div class="sub2">شهر موزی</div><div class="slogan">شهر تو، قوانین تو!</div>
+  <input id="nameIn" maxlength="14" placeholder="اسم شخصیت" autocomplete="off">
+  <button class="tbtn" id="btnContinue">▶ ادامه بازی</button>
+  <button class="tbtn alt" id="btnNew">✦ بازی جدید</button>
+  <button class="tbtn ghost" id="btnHelp">🎮 راهنمای کنترل</button>
+  <div class="small">📱 گوشی رو <b>عمودی</b> بگیر · شهر جهان‌باز نقش‌آفرینی · کار کن، ماشین و خونه بخر، شهر رو بگرد<br>پیشرفتت خودکار ذخیره میشه</div>
+</div>
+
+<div id="hud" class="hidden">
+  <div id="minimap"><canvas id="mm" width="256" height="256"></canvas><div id="clockRow"><span id="hClock">08:00</span><span id="hWeather">☀️</span></div></div>
+  <div id="fps" class="hidden"></div>
+  <div id="stats">
+    <div id="hMoney">$0</div><div id="hBank">$0</div>
+    <div class="lv"><span id="hLevel">سطح 1</span><span>XP</span></div><div class="bar"><i id="hXp"></i></div>
+    <div class="bl"><span>❤️</span><div class="bar"><i id="hHp"></i></div></div>
+    <div class="bl"><span>🍔</span><div class="bar"><i id="hHunger"></i></div></div>
+    <div class="bl"><span>⚡</span><div class="bar"><i id="hStam"></i></div></div>
+  </div>
+  <div id="tracker"></div>
+  <div id="arrow" class="hidden"><i></i><b>0m</b></div>
+  <div id="toasts"></div>
+  <div id="prompt" class="hidden"></div>
+  <div id="repair" class="hidden"><i></i></div>
+  <div id="drift" class="hidden"></div>
+  <div id="speedo" class="hidden"><div><span id="kmh">0</span> <span class="u">km/h</span><span id="gear">N</span></div><div class="fb"><i id="fuel"></i></div><div class="fb nb"><i id="nitro"></i></div><div class="u">⛽ بنزین · 🔥 نیترو</div></div>
+</div>
+
+<div id="touch" class="hidden">
+  <div id="joyzone"></div>
+  <div id="joy"><div id="knob"></div></div>
+  <button class="tb sm" id="bCam" data-b="cam">🎥</button>
+  <button class="tb sm" id="bPhone" data-b="phone">📱</button>
+  <button class="tb sm" id="bMap" data-b="map">🗺</button>
+  <button class="tb sm" id="bPause" data-b="pause">⏸</button>
+  <button class="tb" id="bJump" data-b="jump">⤒<small>پرش</small></button>
+  <button class="tb" id="bRun" data-b="run">🏃<small>دویدن</small></button>
+  <button class="tb" id="bUse" data-b="use">✋<small></small></button>
+  <button class="tb" id="bCar" data-b="car">🚗<small>ماشین</small></button>
+  <button class="tb" id="bGas" data-b="gas">⛽<small>گاز</small></button>
+  <button class="tb" id="bBrake" data-b="brake">🛑<small>ترمز</small></button>
+  <button class="tb sm" id="bHand" data-b="hand">🅿</button>
+  <button class="tb sm" id="bHorn" data-b="horn">📢</button>
+  <button class="tb sm" id="bLights" data-b="lights">💡</button>
+  <button class="tb sm" id="bRadio" data-b="radio">📻</button>
+  <button class="tb" id="bNitro" data-b="nitro">🔥</button>
+</div>
+
+<div id="menu" class="hidden"><div id="menuBox"><div id="menuHead"><div id="menuTitle"></div><div id="menuSub"></div></div><div id="menuList"></div></div></div>
+<div id="phone" class="hidden"><div id="phoneBox"><div id="phoneTop"><button id="phoneBack">‹ بازگشت</button><div id="phoneTitle"></div></div><div id="phoneBody"></div></div></div>
+<div id="fullmap" class="hidden"><canvas id="fm"></canvas><div id="fmBar"><button class="tbtn alt" id="fmClear" style="min-width:0">حذف مقصد</button><button class="tbtn ghost" id="fmClose" style="min-width:0">✕ بستن</button></div><div class="small">روی نقشه بزن تا مقصد (GPS) تعیین بشه</div></div>
+<div id="fade"></div>
+
+<script>/*__THREE__*/</script>
+<script>/*__GLTF__*/</script>
+<script>/*__SKEL__*/</script>
+<script>
+(function(){
+'use strict';
+/*__GAME__*/
+$('fmClose').onclick=closeMap;
+$('fmClear').onclick=function(){gps=null;toast('مقصد حذف شد');};
+$('fm').addEventListener('pointerdown',function(e){var r=this.getBoundingClientRect(),k=(EDGE*2+60)/r.width;gps={x:(e.clientX-r.left)*k-EDGE-30,z:(e.clientY-r.top)*k-EDGE-30};toast('📍 مقصد تعیین شد','good');sfxClick();});
+window.addEventListener('resize',function(){if(mapOpen)sizeFullMap();});
+})();
+</script>
+</body>
+</html>
